@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>可交互的底部导航栏</title>
+    <style>
+        /* 基本重置和页面样式 */
+        body, html {
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            /* 移除了 overflow: hidden 以允许滚动 */
+        }
+
+        /* 用于演示滚动的内容样式 */
+        .scroll-demo-content {
+            text-align: center;
+            padding: 40px 20px;
+            color: #333;
+        }
+
+        /* 防止拖动时选择文本 */
+        .no-select {
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        /* 1）“背景容器“ */
+        #background-container {
+            width: 390px;
+            height: 844px;
+            position: relative;
+            overflow: hidden;
+            background-image: url('https://km.sankuai.com/api/file/cdn/2714970292/176617634396?contentType=1&isNewContent=false');
+            background-size: cover;
+            background-position: center;
+            //box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border-radius: 0px;
+            margin: 0px auto; /* 添加外边距使其居中并与页面其他内容隔开 */
+        }
+
+        /* 2）“更多容器” */
+        #more-container {
+            width: 390px;
+            height: 758px;
+            position: absolute;
+            left: 0;
+            bottom: 86px;
+            background-image: url('https://km.sankuai.com/api/file/cdn/2714970292/176697174129?contentType=1&isNewContent=false');
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 200ms ease-in-out, visibility 200ms ease-in-out;
+            z-index: 10;
+            overflow: hidden; /* 隐藏内部滑出的元素 */
+        }
+        
+        #more-container.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* “更多容器”里的项目通用样式 */
+        .more-item {
+            width: 108px;
+            height: 36px;
+            position: absolute;
+            right: -108px; /* 初始位置在屏幕外 */
+            background-size: contain;
+            background-repeat: no-repeat;
+            transition: right 300ms ease-out; /* 动画效果 */
+        }
+
+        /* 项目进入动效 */
+        .more-item.visible {
+            right: 16px;
+        }
+
+        /* 2）“学城项” */
+        #school-item {
+            bottom: 144px;
+            background-image: url('https://km.sankuai.com/api/file/cdn/2714970292/176695088963?contentType=1&isNewContent=false');
+        }
+
+        /* 3）“考勤项” */
+        #attendance-item {
+            bottom: 84px;
+            background-image: url('https://km.sankuai.com/api/file/cdn/2714970292/176697165032?contentType=1&isNewContent=false');
+        }
+
+        /* 4）“添加项” */
+        #add-item {
+            bottom: 24px; /* 调整位置避免重叠 */
+            background-image: url('https://km.sankuai.com/api/file/cdn/2714970292/176696448318?contentType=1&isNewContent=false');
+        }
+
+
+        /* 3）“底导容器” */
+        #bottom-nav-container {
+            width: 390px;
+            height: 86px;
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            overflow: visible; 
+            z-index: 20;
+            background-color: white; 
+            border-top: 0.5px solid #f0f0f0; 
+            box-sizing: border-box; 
+        }
+
+        /* “底导图片” */
+        #bottom-nav-image {
+            width: 390px;
+            height: 86px;
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            background-image: url('https://km.sankuai.com/api/file/cdn/2714970292/176666313993?contentType=1&isNewContent=false');
+            background-size: cover;
+            background-position: center;
+            cursor: grab;
+            z-index: 30;
+        }
+
+        /* “拉伸容器” */
+        #stretch-container {
+            width: 24px;
+            height: 52px;
+            position: absolute;
+            top: 0;
+            right: -24px;
+            background-image: url('https://km.sankuai.com/api/file/cdn/2714970292/176672257693?contentType=1&isNewContent=false');
+            background-size: 100% 100%; 
+            background-repeat: no-repeat;
+            background-position: center;
+            z-index: 25;
+        }
+
+        /* “拉伸容器”里的文案 */
+        #stretch-text {
+            position: absolute;
+            right: 0px; /* 修改：固定在右侧0px */
+            top: 50%; /* 垂直居中 */
+            transform: translateY(-50%); /* 精确垂直居中 */
+            font-size: 10px;
+            color: rgba(17, 25, 37, 0.45); 
+            font-weight: normal; 
+            white-space: nowrap; 
+        }
+    </style>
+</head>
+<body>
+
+<!-- <div class="scroll-demo-content">
+    <h2>页面顶部</h2>
+    <p>这里是页面顶部的内容，现在您可以向下滚动页面了。</p>
+</div> -->
+
+<div id="background-container" class="no-select">
+    <!-- 更多内容的容器，默认隐藏 -->
+    <div id="more-container">
+        <!-- 新增的三个项目 -->
+        <div id="school-item" class="more-item"></div>
+        <div id="attendance-item" class="more-item"></div>
+        <div id="add-item" class="more-item"></div>
+    </div>
+
+    <!-- 底部导航容器 -->
+    <div id="bottom-nav-container">
+        <!-- 可拖动的底部图片 -->
+        <div id="bottom-nav-image"></div>
+        <!-- 拉伸效果的容器 -->
+        <div id="stretch-container">
+            <span id="stretch-text">更多</span>
+        </div>
+    </div>
+</div>
+
+<!-- <div class="scroll-demo-content">
+    <h2>页面底部</h2>
+    <p>这里是页面底部的内容，向上滚动可以返回顶部。</p>
+</div> -->
+
+<script>
+    // 获取所有需要的DOM元素
+    const bottomNavImage = document.getElementById('bottom-nav-image');
+    const stretchContainer = document.getElementById('stretch-container');
+    const stretchText = document.getElementById('stretch-text');
+    const moreContainer = document.getElementById('more-container');
+    const moreItems = document.querySelectorAll('.more-item');
+    const schoolItem = document.getElementById('school-item');
+    const attendanceItem = document.getElementById('attendance-item');
+    const addItem = document.getElementById('add-item');
+
+
+    // 定义状态变量
+    let isDragging = false;
+    let startX = 0;
+    
+    // 定义常量
+    const MAX_DRAG_DISTANCE = 54;
+    const PHASE_1_DISTANCE = 24;
+    const TRIGGER_DISTANCE = 44;
+
+    // 重置底部导航到初始状态
+    const resetBottomNav = () => {
+        bottomNavImage.style.transition = 'left 0.3s ease-out';
+        stretchContainer.style.transition = 'right 0.3s ease-out, width 0.3s ease-out';
+        
+        bottomNavImage.style.left = '0px';
+        stretchContainer.style.right = '-24px';
+        stretchContainer.style.width = '24px';
+        stretchText.textContent = '更多';
+        
+        setTimeout(() => {
+            bottomNavImage.style.transition = '';
+            stretchContainer.style.transition = '';
+        }, 300);
+    };
+
+    // 显示“更多容器”并触发项目动画
+    const showMoreContainer = () => {
+        moreContainer.classList.add('visible');
+        
+        // 触发带延迟的动画序列
+        setTimeout(() => { schoolItem.classList.add('visible'); }, 0);
+        setTimeout(() => { attendanceItem.classList.add('visible'); }, 50);
+        setTimeout(() => { addItem.classList.add('visible'); }, 100);
+    };
+
+    // 隐藏“更多容器”
+    const hideMoreContainer = () => {
+        // 优化： “更多容器”和其内容（三个选项）一起渐隐
+        moreContainer.classList.remove('visible');
+
+        // 渐隐动画（200ms）结束后，将三个选项恢复到初始位置（right: -108px）
+        // 用户不会看到这个过程，因为父容器已经隐藏
+        setTimeout(() => {
+            moreItems.forEach(item => item.classList.remove('visible'));
+        }, 200); // 这个时间要和 #more-container 的 transition-duration 匹配
+    };
+
+    // 拖动开始
+    const dragStart = (e) => {
+        isDragging = true;
+        startX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+        bottomNavImage.style.cursor = 'grabbing';
+        bottomNavImage.style.transition = '';
+        stretchContainer.style.transition = '';
+    };
+
+    // 拖动中
+    const dragMove = (e) => {
+        if (!isDragging) return;
+        e.preventDefault();
+
+        const currentX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+        let distance = startX - currentX;
+        distance = Math.max(0, Math.min(distance, MAX_DRAG_DISTANCE));
+
+        if (distance <= PHASE_1_DISTANCE) {
+            bottomNavImage.style.left = `-${distance}px`;
+            stretchContainer.style.right = `-${PHASE_1_DISTANCE - distance}px`;
+            stretchContainer.style.width = '24px';
+        } else {
+            bottomNavImage.style.left = `-${distance}px`;
+            stretchContainer.style.right = '0px';
+            const newWidth = PHASE_1_DISTANCE + (distance - PHASE_1_DISTANCE);
+            stretchContainer.style.width = `${newWidth}px`;
+        }
+        
+        const currentWidth = parseFloat(stretchContainer.style.width);
+        stretchText.textContent = currentWidth >= TRIGGER_DISTANCE ? '松开查看' : '更多';
+    };
+
+    // 拖动结束
+    const dragEnd = () => {
+        if (!isDragging) return;
+        isDragging = false;
+        bottomNavImage.style.cursor = 'grab';
+
+        if (stretchText.textContent === '松开查看') {
+            showMoreContainer();
+        }
+        
+        resetBottomNav();
+    };
+
+    // 绑定事件监听器
+    bottomNavImage.addEventListener('mousedown', dragStart);
+    window.addEventListener('mousemove', dragMove);
+    window.addEventListener('mouseup', dragEnd);
+    window.addEventListener('mouseleave', dragEnd);
+
+    bottomNavImage.addEventListener('touchstart', dragStart, { passive: false });
+    window.addEventListener('touchmove', dragMove, { passive: false });
+    window.addEventListener('touchend', dragEnd);
+    
+    moreContainer.addEventListener('click', hideMoreContainer);
+
+</script>
+
+</body>
+</html>
